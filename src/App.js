@@ -1,10 +1,15 @@
-import React, { useEffect } from "react";
-import useFcmToken from "./useFcm";
-import { getMessaging, onMessage } from "firebase/messaging";
+import React, { useEffect, useState } from "react";
+import { getMessaging, getToken, onMessage } from "firebase/messaging";
 import firebaseApp from "./firebase";
+import { postToken } from "./api";
 
 const App = () => {
-  const { fcmToken } = useFcmToken();
+  const [name, setName] = useState("unknown");
+  const [token, setToken] = useState();
+
+  useEffect(() => {
+    retrieveToken();
+  }, []);
 
   const copyToClipboard = (str) => {
     if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
@@ -21,17 +26,55 @@ const App = () => {
       unsubscribe();
     };
   }, []);
+
+  const retrieveToken = async () => {
+    try {
+      if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+        const messaging = getMessaging(firebaseApp);
+
+        const permission = await Notification.requestPermission();
+
+        if (permission === "granted") {
+          const cT = await getToken(messaging, {
+            vapidKey:
+              "BHOscxaEj24wI1b5xShLr0SmJ68iF7xPDugRoqAY1FNWzBXqTBly5es56x7RbQFGt8jrksI2BuoYa-iehpUzrpE",
+          });
+          if (cT) {
+            setToken(cT);
+          }
+        }
+      }
+    } catch (error) {
+      console.log("An error occurred while retrieving token:", error);
+    }
+  };
+
   return (
     <>
       <div>App</div>
-      <button>Send Notification</button>
-      {fcmToken && (
+      <input
+        type="text"
+        onChange={(e) => {
+          setName(e.target.value);
+        }}
+        name="name"
+        placeholder="Enter your name"
+      />
+      <button
+        onClick={async () => {
+          await postToken({ name, token });
+        }}
+      >
+        Submit
+      </button>
+
+      {token && (
         <div
-          onClick={() => copyToClipboard(fcmToken)}
+          onClick={() => copyToClipboard(token)}
           role="button"
           style={{ cursor: "pointer" }}
         >
-          {fcmToken}
+          {token}
         </div>
       )}
     </>
