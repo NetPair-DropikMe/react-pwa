@@ -62,7 +62,9 @@ const App = () => {
       />
       <button
         onClick={async () => {
-          await postToken({ name, token });
+          const res = await postToken({ name, token });
+          if (res) alert("Token submitted!");
+          else alert("Error while token submit!");
         }}
       >
         Submit
