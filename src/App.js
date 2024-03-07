@@ -1,25 +1,41 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useEffect } from "react";
+import useFcmToken from "./useFcm";
+import { getMessaging, onMessage } from "firebase/messaging";
+import firebaseApp from "./firebase";
 
-function App() {
+const App = () => {
+  const { fcmToken } = useFcmToken();
+
+  const copyToClipboard = (str) => {
+    if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(str);
+    }
+  };
+  useEffect(() => {
+    const messaging = getMessaging(firebaseApp);
+    const unsubscribe = onMessage(messaging, (msg) => {
+      console.log(msg);
+      alert(msg?.notification?.body);
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, []);
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
+    <>
+      <div>App</div>
+      <button>Send Notification</button>
+      {fcmToken && (
+        <div
+          onClick={() => copyToClipboard(fcmToken)}
+          role="button"
+          style={{ cursor: "pointer" }}
         >
-          Learn React
-        </a>
-      </header>
-    </div>
+          {fcmToken}
+        </div>
+      )}
+    </>
   );
-}
+};
 
 export default App;
